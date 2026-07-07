@@ -1,4 +1,4 @@
-export const fmtUsd = (n: number): string => `$${Math.round(n).toLocaleString()}`;
+export const fmtUsd = (n: number): string => `$${Math.round(n).toLocaleString("en-US")}`;
 
 export const fmtCompact = (n: number): string => {
   const a = Math.abs(n);
