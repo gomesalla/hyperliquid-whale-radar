@@ -1,0 +1,21 @@
+# Web: Next.js dashboard
+# NOTE: NEXT_PUBLIC_* are inlined at build time. For a non-localhost deploy,
+# rebuild with --build-arg NEXT_PUBLIC_API_URL=... NEXT_PUBLIC_WS_URL=...
+FROM node:20-slim AS base
+RUN corepack enable
+WORKDIR /app
+
+ARG NEXT_PUBLIC_API_URL=http://localhost:4000
+ARG NEXT_PUBLIC_WS_URL=ws://localhost:4000/ws
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
+
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
+COPY packages ./packages
+COPY services/web ./services/web
+
+RUN pnpm install --no-frozen-lockfile
+RUN pnpm -C services/web build
+
+EXPOSE 3000
+CMD ["pnpm", "-C", "services/web", "start"]

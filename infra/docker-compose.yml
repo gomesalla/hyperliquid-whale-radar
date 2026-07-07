@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: whale
+      POSTGRES_PASSWORD: whale
+      POSTGRES_DB: whale
+    ports: ["5432:5432"]
+    volumes: ["pg:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U whale"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  worker:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.worker
+    env_file: .env
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    env_file: .env
+    ports: ["4000:4000"]
+    restart: unless-stopped
+    depends_on:
+      redis: { condition: service_healthy }
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+    env_file: .env
+    ports: ["3000:3000"]
+    restart: unless-stopped
+    depends_on:
+      - api
+
+volumes:
+  pg: {}

@@ -1,0 +1,18 @@
+# Worker: Hyperliquid ingestion + detection engines
+FROM node:20-slim AS base
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN corepack enable
+WORKDIR /app
+
+# Copy workspace manifests + source (context = repo root)
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
+COPY packages ./packages
+COPY services/worker ./services/worker
+COPY scripts ./scripts
+
+RUN pnpm install --no-frozen-lockfile
+RUN pnpm -C packages/db generate
+RUN pnpm -C services/worker build
+
+# Sync schema (idempotent on fresh DB) then start the worker
+CMD sh -c "pnpm -C packages/db push && node services/worker/dist/main.js"
