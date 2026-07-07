@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Market {
+  coin        String   @id
+  szDecimals  Int
+  maxLeverage Int
+  addedAt     DateTime @default(now())
+}
+
+model WhaleEvent {
+  id        String   @id // tid
+  ts        DateTime
+  coin      String
+  taker     String
+  maker     String
+  side      String
+  direction String
+  usd       Float
+  sz        Float
+  px        Float
+  change    String
+  estimated Boolean  @default(false)
+  leverage  Float?
+  liqPx     Float?
+  entryPx   Float?
+  uPnl      Float?
+
+  @@index([coin, ts])
+  @@index([taker, ts])
+}
+
+model PositionLedger {
+  wallet    String
+  coin      String
+  netSize   Float
+  avgEntry  Float
+  updatedAt DateTime @updatedAt
+
+  @@id([wallet, coin])
+}
+
+model Wallet {
+  address     String   @id
+  label       String?
+  firstSeen   DateTime @default(now())
+  totalTrades Int      @default(0)
+  totalVolume Float    @default(0)
+  lastActive  DateTime @default(now())
+}
+
+model CoinSnapshot {
+  id      Int      @id @default(autoincrement())
+  coin    String
+  ts      DateTime @default(now())
+  oi      Float
+  funding Float
+  mark    Float
+  vol     Float
+
+  @@index([coin, ts])
+}
+
+model Cluster {
+  id          Int      @id @default(autoincrement())
+  coin        String
+  ts          DateTime @default(now())
+  direction   String
+  walletCount Int
+  totalUsd    Float
+  strength    Int
+  confidence  String
+
+  @@index([coin, ts])
+}
